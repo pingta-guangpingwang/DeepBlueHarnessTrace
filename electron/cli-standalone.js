@@ -269,6 +269,8 @@ program.command('create-project <name>')
         if (!(await fs.pathExists(readmePath))) {
             await fs.writeFile(readmePath, `# ${name}\n\nThis is a new DBHT project.\n`);
         }
+        // Auto-generate .dbvsignore template
+        await repo.writeDbvsIgnore(workingCopyPath, dbvs_repository_1.DEFAULT_DBVSIGNORE_PATTERNS);
         // 注册到 projects.json
         const registry = await readProjectRegistry(rootPath);
         if (!registry.find((e) => path.resolve(e.repoPath) === repoPath)) {
@@ -354,6 +356,10 @@ program.command('import-project <src>')
         }
         // 链接工作副本
         await repo.initWorkingCopy(repoPath, normalizedPath);
+        // Auto-generate .dbvsignore template for new repos
+        if (isNewRepo) {
+            await repo.writeDbvsIgnore(normalizedPath, dbvs_repository_1.DEFAULT_DBVSIGNORE_PATTERNS);
+        }
         // 仅在新仓库时做初始提交
         if (isNewRepo) {
             const treeResult = await repo.getFileTree(normalizedPath);

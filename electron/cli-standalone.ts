@@ -11,7 +11,7 @@ import * as path from 'path'
 import * as os from 'os'
 import git from 'isomorphic-git'
 import http from 'isomorphic-git/http/node'
-import { DBHTRepository } from './dbvs-repository'
+import { DBHTRepository, DEFAULT_DBVSIGNORE_PATTERNS } from './dbvs-repository'
 import { loadGraph } from './graph-store'
 import { generateHealthReport } from './health-scorer'
 import { analyzeImpact } from './impact-analyzer'
@@ -221,6 +221,9 @@ program.command('create-project <name>')
         await fs.writeFile(readmePath, `# ${name}\n\nThis is a new DBHT project.\n`)
       }
 
+      // Auto-generate .dbvsignore template
+      await repo.writeDbvsIgnore(workingCopyPath, DEFAULT_DBVSIGNORE_PATTERNS)
+
       // 注册到 projects.json
       const registry = await readProjectRegistry(rootPath)
       if (!registry.find((e: any) => path.resolve(e.repoPath) === repoPath)) {
@@ -312,6 +315,11 @@ program.command('import-project <src>')
 
       // 链接工作副本
       await repo.initWorkingCopy(repoPath, normalizedPath)
+
+      // Auto-generate .dbvsignore template for new repos
+      if (isNewRepo) {
+        await repo.writeDbvsIgnore(normalizedPath, DEFAULT_DBVSIGNORE_PATTERNS)
+      }
 
       // 仅在新仓库时做初始提交
       if (isNewRepo) {
