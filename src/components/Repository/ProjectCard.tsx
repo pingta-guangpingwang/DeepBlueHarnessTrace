@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Project } from '../../context/AppContext'
+import { useAppState } from '../../context/AppContext'
 import { useI18n } from '../../i18n'
 
 const NOTES_FILE = '/.dbvs-horsefarm-notes.md'
@@ -37,6 +38,7 @@ export default function ProjectCard({ project, index, total, onEnter, onCommit, 
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showRatingPicker, setShowRatingPicker] = useState(false)
+  const [, dispatch] = useAppState()
   const { t } = useI18n()
 
   const hasWorkingCopy = !!project.path
@@ -264,20 +266,20 @@ export default function ProjectCard({ project, index, total, onEnter, onCommit, 
       <div className="project-actions" style={{ flexShrink: 0 }}>
         <button
           style={{ fontSize: '12px', padding: '4px 12px' }}
-          onClick={hasWorkingCopy ? onEnter : undefined}
+          onClick={hasWorkingCopy ? onEnter : () => dispatch({ type: 'SET_MESSAGE', payload: t.projectCard.noWorkingCopy + ' ' + t.projectCard.noWorkingCopyHint })}
           disabled={!hasWorkingCopy}
           title={!hasWorkingCopy ? t.projectCard.noWorkingCopy : ''}
         >{t.projectCard.enter}</button>
         <button
           style={{ fontSize: '12px', padding: '4px 12px' }}
-          onClick={hasWorkingCopy ? onCommit : undefined}
+          onClick={hasWorkingCopy ? onCommit : () => dispatch({ type: 'SET_MESSAGE', payload: t.projectCard.noWorkingCopy + ' ' + t.projectCard.noWorkingCopyHint })}
           disabled={!hasWorkingCopy}
           title={!hasWorkingCopy ? t.projectCard.noWorkingCopy : ''}
         >{t.projectCard.commits}</button>
         <button
           className="secondary-button"
           style={{ fontSize: '12px', padding: '4px 12px' }}
-          onClick={openFolder}
+          onClick={hasWorkingCopy ? openFolder : () => dispatch({ type: 'SET_MESSAGE', payload: t.projectCard.noWorkingCopy + ' ' + t.projectCard.noWorkingCopyHint })}
           disabled={!hasWorkingCopy}
           title={!hasWorkingCopy ? t.projectCard.noWorkingCopy : ''}
         >{t.projectCard.openFolder}</button>

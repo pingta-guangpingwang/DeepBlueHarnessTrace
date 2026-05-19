@@ -913,6 +913,7 @@ const zh: Translations = {
     notesHint: '备注自动保存到项目目录下的 .dbvs-horsefarm-notes.md，与驾驭工程共享',
     notCheckedOut: '未检出',
     noWorkingCopy: '无工作副本，请先检出',
+    noWorkingCopyHint: '请删除后重新"导入项目"或"创建项目"（需填写客户端路径）。',
     removeTitle: '移除项目',
     unlinkOnly: '仅移除列表',
     unlinkDesc: '只从列表中移除。文件和仓库不会被删除。',

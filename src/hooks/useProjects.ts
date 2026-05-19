@@ -157,7 +157,14 @@ export function useProjects() {
 
   const openProject = useCallback(async (projectPath: string) => {
     const project = state.projects.find(p => p.path === projectPath || p.repoPath === projectPath)
-    if (!project || !project.path) return
+    if (!project) {
+      dispatch({ type: 'SET_MESSAGE', payload: '项目不存在，请刷新列表后重试。' })
+      return
+    }
+    if (!project.path) {
+      dispatch({ type: 'SET_MESSAGE', payload: '该项目尚未创建客户端工作副本。请先删除后重新"导入"或创建项目，并确保选择客户端路径。' })
+      return
+    }
 
     dispatch({ type: 'RESET_PROJECT_STATE' })
     dispatch({ type: 'SET_CURRENT_PROJECT', payload: project.path })

@@ -919,6 +919,7 @@ const en = {
     notesHint: 'Notes auto-saved to .dbvs-horsefarm-notes.md in the project directory, shared with Harness Farm.',
     notCheckedOut: 'Not checked out',
     noWorkingCopy: 'No working copy — check out first',
+    noWorkingCopyHint: 'Remove this entry and re-import or re-create with a client path.',
     removeTitle: 'Remove Project',
     unlinkOnly: 'Unlink Only',
     unlinkDesc: 'Remove from list. Files and repository will not be deleted.',
