@@ -66,6 +66,7 @@ DBHT-Root/                    ← 根仓库
 
 工作副本 (任意位置)/
 ├── .dbvs-link.json           ← 指向集中仓库的链接
+├── .dbvsignore               ← 版本忽略规则（自动生成）
 ├── DBHT-GUIDE.md             ← 版本管理说明文档
 ├── .git/                     ← (可选) Git 远程同步
 └── ...项目文件...
@@ -81,6 +82,7 @@ DBHT-Root/                    ← 根仓库
 | **提交 (Commit)** | 将工作副本的文件快照保存到集中仓库 |
 | **更新 (Update)** | 从集中仓库恢复文件到工作副本 |
 | **回滚 (Rollback)** | 恢复到历史指定版本 |
+| **忽略规则 (.dbvsignore)** | 每行一个 glob 规则，排除 dist/、build/、*.log 等文件。新建项目自动生成默认模板，可在设置面板编辑 |
 
 ## CLI 命令参考
 
@@ -122,7 +124,7 @@ dbht diff <path> -f file.ts -a v1 -b v2  # 比较两个版本
 dbht info <path>              # 查看仓库信息
 dbht init <path>              # 初始化仓库
 dbht verify <path>            # 验证仓库完整性
-dbht file-tree <path>         # 列出项目文件树
+dbht file-tree <path>         # 列出项目文件树（自动应用 .dbvsignore 规则）
 dbht version [path]           # 查看当前版本
 dbht pull <repoPath> <dir>    # 从仓库拉取项目到目标目录
 ```
