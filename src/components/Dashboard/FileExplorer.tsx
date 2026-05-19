@@ -3,20 +3,7 @@ import { useAppState } from '../../context/AppContext'
 import { useFiles } from '../../hooks/useFiles'
 import { useI18n } from '../../i18n'
 import VirtualList from '../common/VirtualList'
-import { flattenTree, type FlatTreeNode } from '../../utils/flattenTree'
-
-interface TreeNode {
-  name: string
-  path: string
-  isDirectory: boolean
-  children: TreeNode[]
-}
-
-interface FileEntry {
-  name: string
-  path: string
-  isDirectory: boolean
-}
+import { flattenTree, type FlatTreeNode, type TreeNode, type FileEntry, buildTree } from '../../utils/flattenTree'
 
 function getFileIcon(name: string): { icon: string; color: string } {
   const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : ''
@@ -43,37 +30,6 @@ function getFileIcon(name: string): { icon: string; color: string } {
     lock: { icon: 'LK', color: '#6b7280' },
   }
   return map[ext] || { icon: ext ? ext.substring(0, 2).toUpperCase() : '?', color: '#9ca3af' }
-}
-
-function buildTree(files: FileEntry[]): TreeNode[] {
-  const root: TreeNode[] = []
-  for (const file of files) {
-    const parts = file.path.split('/')
-    let current = root
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      const isLast = i === parts.length - 1
-      const isDir = isLast ? file.isDirectory : true
-      const existingNode = current.find(n => n.name === part)
-      if (existingNode) {
-        current = existingNode.children
-      } else {
-        const newNode: TreeNode = {
-          name: part,
-          path: parts.slice(0, i + 1).join('/'),
-          isDirectory: isDir,
-          children: [],
-        }
-        current.push(newNode)
-        current.sort((a, b) => {
-          if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1
-          return a.name.localeCompare(b.name)
-        })
-        current = newNode.children
-      }
-    }
-  }
-  return root
 }
 
 function TreeRow({

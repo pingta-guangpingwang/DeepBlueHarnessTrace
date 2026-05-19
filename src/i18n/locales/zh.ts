@@ -429,6 +429,14 @@ const zh: Translations = {
     apiSave: '保存配置',
     apiPort: '端口',
     apiToken: 'Bearer Token（可选）',
+    dbvsIgnore: '忽略规则 (.dbvsignore)',
+    dbvsIgnoreDesc: '管理版本控制中排除的文件和文件夹。每行一个规则，以 # 开头的行是注释，支持 * 通配符。',
+    dbvsIgnoreLoad: '加载',
+    dbvsIgnoreSave: '保存',
+    dbvsIgnoreQuickAdd: '快速添加：',
+    dbvsIgnoreSaved: '.dbvsignore 已保存成功。',
+    dbvsIgnoreLoadFailed: '加载 .dbvsignore 失败。',
+    dbvsIgnoreNoProject: '请先打开一个项目来管理忽略规则。',
   },
 
   // About tab
@@ -743,6 +751,7 @@ const zh: Translations = {
     importInfo: '导入后，文件夹将作为工作副本，版本数据存储在仓库的 repositories/ 目录中。',
     importing: '导入中...',
     confirmImport: '确认导入',
+    toggleFileTree: '展开文件列表，选择要忽略的文件...',
   },
 
   // Conflict Modal

@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as fs from 'fs-extra'
 import * as os from 'os'
 import { execFile } from 'child_process'
-import { DBHTRepository } from '../dbvs-repository'
+import { DBHTRepository, DEFAULT_DBVSIGNORE_PATTERNS } from '../dbvs-repository'
 import {
   readProjectRegistry,
   writeProjectRegistry,
@@ -516,6 +516,9 @@ ipcMain.handle('dbgvs:create-project', async (_, rootPath: string, projectName: 
       await fs.writeFile(readmePath, `# ${projectName}\n\n这是一个新的DBHT项目。\n`)
     }
 
+    // Auto-generate .dbvsignore template
+    await dbvsRepo.writeDbvsIgnore(workingCopyPath, DEFAULT_DBVSIGNORE_PATTERNS)
+
     await ensureProjectGuide(workingCopyPath, projectName.trim(), repoPath)
     await ensureProjectRequirements(workingCopyPath, projectName.trim())
 
@@ -594,7 +597,7 @@ ipcMain.handle('dbgvs:get-projects', async (_, rootPath: string) => {
 })
 
 // 注册已有目录为项目
-ipcMain.handle('dbgvs:register-project', async (_, rootPath: string, projectPath: string, projectName?: string, initWithCommit: boolean = false) => {
+ipcMain.handle('dbgvs:register-project', async (_, rootPath: string, projectPath: string, projectName?: string, initWithCommit: boolean = false, options?: { ignorePatterns?: string[] }) => {
   try {
     const name = projectName || path.basename(projectPath)
     const registry = await readProjectRegistry(rootPath)
@@ -624,6 +627,12 @@ ipcMain.handle('dbgvs:register-project', async (_, rootPath: string, projectPath
     }
 
     await dbvsRepo.initWorkingCopy(repoPath, normalizedProjectPath)
+
+    // Write .dbvsignore if patterns provided
+    const ignorePatterns = options?.ignorePatterns
+    if (ignorePatterns && ignorePatterns.length > 0) {
+      await dbvsRepo.writeDbvsIgnore(normalizedProjectPath, ignorePatterns)
+    }
 
     if (initWithCommit) {
       const send = (msg: string) => mainWindow?.webContents.send('project:progress', msg)

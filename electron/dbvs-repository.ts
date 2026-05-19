@@ -8,6 +8,9 @@ const dmp = new DiffMatchPatch.diff_match_patch()
 /** 忽略的目录/文件模式（内置） */
 const IGNORE_PATTERNS = ['.dbvs', '.dbvs-link.json', 'node_modules', '.git', '.DS_Store', 'Thumbs.db', 'DBHT-GUIDE.md']
 
+/** 默认 .dbvsignore 模板（新建项目时自动生成） */
+export const DEFAULT_DBVSIGNORE_PATTERNS = ['dist/', 'build/', '*.log', '.env', '.tmp/']
+
 function shouldIgnoreBuiltin(name: string): boolean {
   return IGNORE_PATTERNS.includes(name) || name.startsWith('.')
 }
@@ -311,6 +314,31 @@ export class DBHTRepository {
       }
     } catch (error) {
       return { success: false, files: [], message: String(error) }
+    }
+  }
+
+  // ==================== .dbvsignore 读写 ====================
+
+  /** Read .dbvsignore content from working copy root */
+  async readDbvsIgnore(workingCopyPath: string): Promise<string> {
+    try {
+      const ignorePath = path.join(workingCopyPath, '.dbvsignore')
+      if (await fs.pathExists(ignorePath)) {
+        return await fs.readFile(ignorePath, 'utf-8')
+      }
+    } catch { /* ignore */ }
+    return ''
+  }
+
+  /** Write .dbvsignore patterns to working copy root */
+  async writeDbvsIgnore(workingCopyPath: string, patterns: string[]): Promise<{ success: boolean; message: string }> {
+    try {
+      const ignorePath = path.join(workingCopyPath, '.dbvsignore')
+      const content = ['# DBHT Ignore Patterns', ...patterns].join('\n') + '\n'
+      await fs.writeFile(ignorePath, content, 'utf-8')
+      return { success: true, message: '.dbvsignore saved' }
+    } catch (error) {
+      return { success: false, message: String(error) }
     }
   }
 

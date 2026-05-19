@@ -427,6 +427,14 @@ const en = {
     apiSave: 'Save Config',
     apiPort: 'Port',
     apiToken: 'Bearer Token (optional)',
+    dbvsIgnore: 'Ignore Rules (.dbvsignore)',
+    dbvsIgnoreDesc: 'Manage files and folders excluded from version control. One pattern per line. Lines starting with # are comments. Use * as a wildcard.',
+    dbvsIgnoreLoad: 'Load',
+    dbvsIgnoreSave: 'Save',
+    dbvsIgnoreQuickAdd: 'Quick Add:',
+    dbvsIgnoreSaved: '.dbvsignore saved successfully.',
+    dbvsIgnoreLoadFailed: 'Failed to load .dbvsignore.',
+    dbvsIgnoreNoProject: 'Open a project to manage ignore rules.',
   },
 
   // About tab
@@ -749,6 +757,7 @@ const en = {
     importInfo: 'After import, the folder becomes a working copy with version data stored in the repository\'s repositories/ directory.',
     importing: 'Importing...',
     confirmImport: 'Confirm Import',
+    toggleFileTree: 'Show file list, select files to ignore...',
   },
 
   // Conflict Modal

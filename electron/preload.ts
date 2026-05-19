@@ -24,11 +24,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isDBHTRepository: (path: string) => ipcRenderer.invoke('dbgvs:is-repository', path),
   createProject: (rootPath: string, projectName: string, customPath?: string) => ipcRenderer.invoke('dbgvs:create-project', rootPath, projectName, customPath),
   getProjects: (rootPath: string) => ipcRenderer.invoke('dbgvs:get-projects', rootPath),
-  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean) => ipcRenderer.invoke('dbgvs:register-project', rootPath, projectPath, projectName, initWithCommit),
+  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean, options?: { ignorePatterns?: string[] }) => ipcRenderer.invoke('dbgvs:register-project', rootPath, projectPath, projectName, initWithCommit, options),
   checkoutProject: (rootPath: string, repoPath: string) => ipcRenderer.invoke('dbgvs:checkout-project', rootPath, repoPath),
   initRepository: (repoPath: string) => ipcRenderer.invoke('dbgvs:init-repository', repoPath),
   getStatus: (repoPath: string, workingCopyPath: string) => ipcRenderer.invoke('dbgvs:get-status', repoPath, workingCopyPath),
   getFileTree: (workingCopyPath: string) => ipcRenderer.invoke('dbgvs:get-file-tree', workingCopyPath),
+  readDbvsIgnore: (workingCopyPath: string) => ipcRenderer.invoke('dbgvs:read-dbvsignore', workingCopyPath),
+  writeDbvsIgnore: (workingCopyPath: string, patterns: string[]) => ipcRenderer.invoke('dbgvs:write-dbvsignore', workingCopyPath, patterns),
   commit: (repoPath: string, workingCopyPath: string, message: string, files: string[], options?: { summary?: string; author?: string; sessionId?: string }) =>
     ipcRenderer.invoke('dbgvs:commit', repoPath, workingCopyPath, message, files, options),
   getHistory: (repoPath: string) => ipcRenderer.invoke('dbgvs:get-history', repoPath),
@@ -263,11 +265,13 @@ export interface ElectronAPI {
   getProjects: (rootPath: string) => Promise<{ success: boolean; projects?: Array<{
     name: string; path: string; repoPath: string; status: string; lastUpdate?: string; hasChanges?: boolean
   }>; message?: string }>
-  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean) => Promise<{ success: boolean; message?: string }>
+  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean, options?: { ignorePatterns?: string[] }) => Promise<{ success: boolean; message?: string }>
   checkoutProject: (rootPath: string, repoPath: string) => Promise<{ success: boolean; message?: string; targetPath?: string }>
   initRepository: (repoPath: string) => Promise<{ success: boolean; message?: string }>
   getStatus: (repoPath: string, workingCopyPath: string) => Promise<{ success: boolean; status?: string[]; message?: string }>
   getFileTree: (workingCopyPath: string) => Promise<{ success: boolean; files?: Array<{ name: string; path: string }>; message?: string }>
+  readDbvsIgnore: (workingCopyPath: string) => Promise<{ success: boolean; content: string }>
+  writeDbvsIgnore: (workingCopyPath: string, patterns: string[]) => Promise<{ success: boolean; message: string }>
   commit: (repoPath: string, workingCopyPath: string, message: string, files: string[]) => Promise<{ success: boolean; message?: string }>
   getHistory: (repoPath: string) => Promise<{ success: boolean; history?: string; message?: string }>
   rollback: (repoPath: string, workingCopyPath: string, version: string) => Promise<{ success: boolean; message?: string }>

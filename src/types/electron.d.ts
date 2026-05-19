@@ -18,11 +18,13 @@ export interface ElectronAPI {
   getProjects: (rootPath: string) => Promise<{ success: boolean; projects?: Array<{
     name: string; path: string; repoPath: string; status: string; lastUpdate?: string; hasChanges?: boolean
   }>; message?: string }>
-  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean) => Promise<{ success: boolean; message?: string }>
+  registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean, options?: { ignorePatterns?: string[] }) => Promise<{ success: boolean; message?: string }>
   checkoutProject: (rootPath: string, repoPath: string) => Promise<{ success: boolean; message?: string; targetPath?: string }>
   initRepository: (repoPath: string) => Promise<{ success: boolean; message?: string }>
   getStatus: (repoPath: string, workingCopyPath: string) => Promise<{ success: boolean; status?: string[]; message?: string }>
   getFileTree: (workingCopyPath: string) => Promise<{ success: boolean; files?: Array<{ name: string; path: string }>; message?: string }>
+  readDbvsIgnore: (workingCopyPath: string) => Promise<{ success: boolean; content: string }>
+  writeDbvsIgnore: (workingCopyPath: string, patterns: string[]) => Promise<{ success: boolean; message: string }>
   commit: (repoPath: string, workingCopyPath: string, message: string, files: string[], options?: { summary?: string; author?: string; sessionId?: string }) => Promise<{ success: boolean; message?: string }>
   getHistory: (repoPath: string) => Promise<{ success: boolean; history?: string; message?: string }>
   rollback: (repoPath: string, workingCopyPath: string, version: string) => Promise<{ success: boolean; message?: string }>

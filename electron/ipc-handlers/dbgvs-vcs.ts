@@ -308,4 +308,14 @@ ipcMain.handle('dbgvs:generate-commit-message', async (_, repoPath: string, work
   }
 })
 
+// .dbvsignore 读写
+ipcMain.handle('dbgvs:read-dbvsignore', async (_, workingCopyPath: string) => {
+  const content = await dbvsRepo.readDbvsIgnore(workingCopyPath)
+  return { success: true, content }
+})
+
+ipcMain.handle('dbgvs:write-dbvsignore', async (_, workingCopyPath: string, patterns: string[]) => {
+  return await dbvsRepo.writeDbvsIgnore(workingCopyPath, patterns)
+})
+
 } // end registerVcsHandlers

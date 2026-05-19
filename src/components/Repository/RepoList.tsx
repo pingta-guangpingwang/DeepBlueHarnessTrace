@@ -994,8 +994,8 @@ export default function RepoList() {
           folderPath={importFolderPath}
           warning={importWarning}
           progressLog={importProgress}
-          onConfirm={async (projectName, initWithCommit) => {
-            await confirmImport(importFolderPath, projectName, initWithCommit)
+          onConfirm={async (projectName, initWithCommit, ignorePatterns) => {
+            await confirmImport(importFolderPath, projectName, initWithCommit, ignorePatterns)
             setImportFolderPath(null)
             setImportWarning(undefined)
           }}

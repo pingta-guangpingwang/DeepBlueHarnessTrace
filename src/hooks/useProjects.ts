@@ -91,7 +91,7 @@ export function useProjects() {
     return { folder }
   }, [state.rootRepositoryPath, dispatch, loadProjects])
 
-  const confirmImport = useCallback(async (folderPath: string, projectName: string, initWithCommit: boolean) => {
+  const confirmImport = useCallback(async (folderPath: string, projectName: string, initWithCommit: boolean, ignorePatterns?: string[]) => {
     if (!state.rootRepositoryPath) return
 
     setImportProgress([])
@@ -101,7 +101,8 @@ export function useProjects() {
 
     dispatch({ type: 'SET_IS_LOADING', payload: true })
     try {
-      const result = await window.electronAPI.registerProject(state.rootRepositoryPath, folderPath, projectName, initWithCommit)
+      const options = ignorePatterns?.length ? { ignorePatterns } : undefined
+      const result = await window.electronAPI.registerProject(state.rootRepositoryPath, folderPath, projectName, initWithCommit, options)
       if (result?.success) {
         await loadProjects()
         dispatch({ type: 'SET_MESSAGE', payload: `项目 "${projectName}" 导入成功！${initWithCommit ? '（已创建初始版本）' : ''}` })

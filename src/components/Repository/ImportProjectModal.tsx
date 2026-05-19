@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useAppState } from '../../context/AppContext'
 import { useI18n } from '../../i18n'
+import FileTreeSelector from '../common/FileTreeSelector'
+import { type FileEntry } from '../../utils/flattenTree'
 
 interface Props {
   folderPath: string
   warning?: string
   progressLog: string[]
-  onConfirm: (projectName: string, initWithCommit: boolean) => void
+  onConfirm: (projectName: string, initWithCommit: boolean, ignorePatterns?: string[]) => void
   onCancel: () => void
 }
 
@@ -16,6 +18,9 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
   const [projectName, setProjectName] = useState('')
   const [initWithCommit, setInitWithCommit] = useState(true)
   const [fileCount, setFileCount] = useState<number | null>(null)
+  const [fileEntries, setFileEntries] = useState<FileEntry[]>([])
+  const [ignorePatterns, setIgnorePatterns] = useState<string[]>([])
+  const [showFileTree, setShowFileTree] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // 从文件夹路径提取默认名称
@@ -27,11 +32,12 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
     }
   }, [folderPath])
 
-  // 统计文件数
+  // 加载文件列表
   useEffect(() => {
     if (folderPath) {
-      window.electronAPI.getFileTree(folderPath).then(result => {
+      window.electronAPI.listFiles(folderPath).then(result => {
         if (result.success && result.files) {
+          setFileEntries(result.files)
           setFileCount(result.files.length)
         }
       }).catch(() => {
@@ -43,8 +49,17 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
   const handleConfirm = async () => {
     if (!projectName.trim()) return
     setLoading(true)
-    await onConfirm(projectName.trim(), initWithCommit)
+    await onConfirm(projectName.trim(), initWithCommit, ignorePatterns.length > 0 ? ignorePatterns : undefined)
     setLoading(false)
+  }
+
+  const handleIgnoreChange = (uncheckedPaths: string[]) => {
+    // Convert unchecked paths to ignore patterns: dirs get / suffix
+    const patterns = uncheckedPaths.map(p => {
+      const entry = fileEntries.find(f => f.path === p)
+      return entry?.isDirectory ? p + '/' : p
+    })
+    setIgnorePatterns(patterns)
   }
 
   const canConfirm = projectName.trim().length > 0 && !loading
@@ -83,6 +98,40 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
               {fileCount !== null ? `${fileCount}${t.importProject.detectedFiles}` : t.importProject.scanning}
             </div>
           </div>
+
+          {/* 文件过滤选择器 */}
+          {fileEntries.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div
+                onClick={() => setShowFileTree(!showFileTree)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+                  padding: '8px 12px', background: '#f0f9ff', borderRadius: '6px',
+                  border: '1px solid #bae6fd', fontSize: '13px', color: '#0369a1',
+                  userSelect: 'none',
+                }}
+              >
+                <span style={{ transform: showFileTree ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', fontSize: '10px' }}>
+                  &#9654;
+                </span>
+                {t.importProject.toggleFileTree || 'Select files to ignore...'}
+                {ignorePatterns.length > 0 && (
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#6b7280' }}>
+                    {ignorePatterns.length} rule(s)
+                  </span>
+                )}
+              </div>
+              {showFileTree && (
+                <div style={{ marginTop: '8px' }}>
+                  <FileTreeSelector
+                    files={fileEntries}
+                    maxHeight="300px"
+                    onChange={handleIgnoreChange}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 仓库名称 */}
           <div style={{ marginBottom: '16px' }}>

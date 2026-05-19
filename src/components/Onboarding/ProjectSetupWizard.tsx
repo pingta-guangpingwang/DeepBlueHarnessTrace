@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAppState } from '../../context/AppContext'
 import { useI18n } from '../../i18n'
+import FileTreeSelector from '../common/FileTreeSelector'
+import { type FileEntry } from '../../utils/flattenTree'
 
 type WorkMode = 'ai' | 'manual' | 'hybrid'
 
@@ -21,6 +23,9 @@ export default function ProjectSetupWizard() {
   const [snapshotEnabled, setSnapshotEnabled] = useState(true)
   const [snapshotInterval, setSnapshotInterval] = useState(30)
   const [working, setWorking] = useState(false)
+  const [ignorePatterns, setIgnorePatterns] = useState<string[]>([])
+  const [fileEntries, setFileEntries] = useState<FileEntry[]>([])
+  const [showFileTree, setShowFileTree] = useState(false)
 
   const close = async () => {
     await window.electronAPI.setOnboardingCompleted(true)
@@ -39,7 +44,8 @@ export default function ProjectSetupWizard() {
           return
         }
       } else if (action === 'import' && importPath && projectName.trim()) {
-        const result = await window.electronAPI.registerProject(state.rootRepositoryPath, importPath, projectName.trim(), true)
+        const options = ignorePatterns.length > 0 ? { ignorePatterns } : undefined
+        const result = await window.electronAPI.registerProject(state.rootRepositoryPath, importPath, projectName.trim(), true, options)
         if (!result.success) {
           dispatch({ type: 'SET_MESSAGE', payload: result.message || 'Failed to import project' })
           setWorking(false)
@@ -86,7 +92,20 @@ export default function ProjectSetupWizard() {
       if (!projectName) {
         setProjectName(folder.split(/[/\\]/).pop() || '')
       }
+      // Load file tree for .dbvsignore
+      const result = await window.electronAPI.listFiles(folder)
+      if (result.success && result.files) {
+        setFileEntries(result.files)
+      }
     }
+  }
+
+  const handleWizardIgnoreChange = (uncheckedPaths: string[]) => {
+    const patterns = uncheckedPaths.map(p => {
+      const entry = fileEntries.find(f => f.path === p)
+      return entry?.isDirectory ? p + '/' : p
+    })
+    setIgnorePatterns(patterns)
   }
 
   return (
@@ -193,6 +212,38 @@ export default function ProjectSetupWizard() {
               )}
             </>
           )}
+                  {action === 'import' && fileEntries.length > 0 && (
+                    <div style={{ marginTop: '4px' }}>
+                      <div
+                        onClick={() => setShowFileTree(!showFileTree)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+                          padding: '6px 10px', background: '#f0f9ff', borderRadius: '6px',
+                          border: '1px solid #bae6fd', fontSize: '12px', color: '#0369a1',
+                          userSelect: 'none',
+                        }}
+                      >
+                        <span style={{ transform: showFileTree ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', fontSize: '10px' }}>
+                          &#9654;
+                        </span>
+                        {t.importProject.toggleFileTree || 'Select files to ignore...'}
+                        {ignorePatterns.length > 0 && (
+                          <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#6b7280' }}>
+                            {ignorePatterns.length} rule(s)
+                          </span>
+                        )}
+                      </div>
+                      {showFileTree && (
+                        <div style={{ marginTop: '6px' }}>
+                          <FileTreeSelector
+                            files={fileEntries}
+                            maxHeight="250px"
+                            onChange={handleWizardIgnoreChange}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
           {/* Step 2: Work mode */}
           {step === 1 && (

@@ -33,11 +33,7 @@ export default function VirtualList<T>({
   const itemData = { items, renderItem }
 
   function Row({ index, style, data }: ListChildComponentProps<typeof itemData>) {
-    return (
-      <div style={style}>
-        {data.renderItem(data.items[index], index, style)}
-      </div>
-    )
+    return data.renderItem(data.items[index], index, style) as React.ReactElement
   }
 
   useEffect(() => {

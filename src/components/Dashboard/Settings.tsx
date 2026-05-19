@@ -124,6 +124,125 @@ function ExternalApiSection() {
   )
 }
 
+function DbvsIgnoreSection() {
+  const [state, dispatch] = useAppState()
+  const { t } = useI18n()
+  const [content, setContent] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const loadContent = useCallback(async () => {
+    if (!state.projectPath) return
+    try {
+      const result = await window.electronAPI.readDbvsIgnore(state.projectPath)
+      if (result.success) {
+        setContent(result.content)
+        setLoaded(true)
+      }
+    } catch {
+      dispatch({ type: 'SET_MESSAGE', payload: t.settings.dbvsIgnoreLoadFailed })
+    }
+  }, [state.projectPath, dispatch, t])
+
+  useEffect(() => {
+    if (state.projectPath && !loaded) {
+      loadContent()
+    }
+  }, [state.projectPath, loaded, loadContent])
+
+  // Reset when project changes
+  useEffect(() => {
+    setContent('')
+    setLoaded(false)
+  }, [state.projectPath])
+
+  const handleSave = async () => {
+    if (!state.projectPath) return
+    setSaving(true)
+    try {
+      const patterns = content.split('\n').filter(line => line.trim() !== '')
+      const result = await window.electronAPI.writeDbvsIgnore(state.projectPath, patterns)
+      if (result.success) {
+        dispatch({ type: 'SET_MESSAGE', payload: t.settings.dbvsIgnoreSaved })
+      } else {
+        dispatch({ type: 'SET_MESSAGE', payload: result.message })
+      }
+    } catch {
+      dispatch({ type: 'SET_MESSAGE', payload: t.settings.dbvsIgnoreLoadFailed })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const quickAdd = (pattern: string) => {
+    const lines = content.split('\n')
+    if (!lines.includes(pattern)) {
+      setContent(prev => (prev.trimEnd() ? prev + '\n' + pattern : pattern))
+    }
+  }
+
+  const quickPatterns = ['dist/', 'build/', '*.log', '.env', '.tmp/', 'node_modules/']
+
+  if (!state.projectPath) {
+    return (
+      <div className="settings-section">
+        <h3>{t.settings.dbvsIgnore}</h3>
+        <p style={{ color: '#9ca3af', margin: '0', fontSize: '13px', fontStyle: 'italic' }}>
+          {t.settings.dbvsIgnoreNoProject}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="settings-section">
+      <h3>{t.settings.dbvsIgnore}</h3>
+      <p style={{ color: '#6b7280', margin: '0 0 12px', fontSize: '13px' }}>
+        {t.settings.dbvsIgnoreDesc}
+      </p>
+
+      <textarea
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        placeholder="# One pattern per line, e.g.:&#10;dist/&#10;build/&#10;*.log&#10;.env"
+        style={{
+          width: '100%', height: '160px', padding: '10px 12px',
+          fontSize: '13px', fontFamily: 'Consolas, Monaco, monospace',
+          border: '1px solid #d1d5db', borderRadius: '6px', outline: 'none',
+          resize: 'vertical', boxSizing: 'border-box',
+          lineHeight: '1.6',
+        }}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '11px', color: '#9ca3af', marginRight: '2px' }}>{t.settings.dbvsIgnoreQuickAdd}</span>
+        {quickPatterns.map(p => (
+          <button
+            key={p}
+            onClick={() => quickAdd(p)}
+            style={{
+              padding: '2px 8px', fontSize: '11px', fontFamily: 'Consolas, Monaco, monospace',
+              background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px',
+              cursor: 'pointer', color: '#374151',
+            }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <button onClick={loadContent} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db' }}>
+          {t.settings.dbvsIgnoreLoad}
+        </button>
+        <button onClick={handleSave} disabled={saving}>
+          {saving ? t.settings.dbvsIgnoreSave + '...' : t.settings.dbvsIgnoreSave}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Settings() {
   const [state, dispatch] = useAppState()
   const { disconnectRemote, loadGitStatus } = useGit()
@@ -308,6 +427,8 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      <DbvsIgnoreSection />
     </div>
   )
 }
