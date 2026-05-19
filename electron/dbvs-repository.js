@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DBHTRepository = void 0;
+exports.DBHTRepository = exports.DEFAULT_DBVSIGNORE_PATTERNS = void 0;
 const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const crypto = __importStar(require("crypto"));
@@ -44,6 +44,8 @@ const diff_match_patch_1 = __importDefault(require("diff-match-patch"));
 const dmp = new diff_match_patch_1.default.diff_match_patch();
 /** 忽略的目录/文件模式（内置） */
 const IGNORE_PATTERNS = ['.dbvs', '.dbvs-link.json', 'node_modules', '.git', '.DS_Store', 'Thumbs.db', 'DBHT-GUIDE.md'];
+/** 默认 .dbvsignore 模板（新建项目时自动生成） */
+exports.DEFAULT_DBVSIGNORE_PATTERNS = ['dist/', 'build/', '*.log', '.env', '.tmp/'];
 function shouldIgnoreBuiltin(name) {
     return IGNORE_PATTERNS.includes(name) || name.startsWith('.');
 }
@@ -299,6 +301,30 @@ class DBHTRepository {
         }
         catch (error) {
             return { success: false, files: [], message: String(error) };
+        }
+    }
+    // ==================== .dbvsignore 读写 ====================
+    /** Read .dbvsignore content from working copy root */
+    async readDbvsIgnore(workingCopyPath) {
+        try {
+            const ignorePath = path.join(workingCopyPath, '.dbvsignore');
+            if (await fs.pathExists(ignorePath)) {
+                return await fs.readFile(ignorePath, 'utf-8');
+            }
+        }
+        catch { /* ignore */ }
+        return '';
+    }
+    /** Write .dbvsignore patterns to working copy root */
+    async writeDbvsIgnore(workingCopyPath, patterns) {
+        try {
+            const ignorePath = path.join(workingCopyPath, '.dbvsignore');
+            const content = ['# DBHT Ignore Patterns', ...patterns].join('\n') + '\n';
+            await fs.writeFile(ignorePath, content, 'utf-8');
+            return { success: true, message: '.dbvsignore saved' };
+        }
+        catch (error) {
+            return { success: false, message: String(error) };
         }
     }
     // ==================== 提交 ====================

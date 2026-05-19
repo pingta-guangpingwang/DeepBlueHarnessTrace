@@ -1,3 +1,5 @@
+/** 默认 .dbvsignore 模板（新建项目时自动生成） */
+export declare const DEFAULT_DBVSIGNORE_PATTERNS: string[];
 export interface CommitFileEntry {
     path: string;
     hash: string;
@@ -74,6 +76,13 @@ export declare class DBHTRepository {
             path: string;
         }>;
         message?: string;
+    }>;
+    /** Read .dbvsignore content from working copy root */
+    readDbvsIgnore(workingCopyPath: string): Promise<string>;
+    /** Write .dbvsignore patterns to working copy root */
+    writeDbvsIgnore(workingCopyPath: string, patterns: string[]): Promise<{
+        success: boolean;
+        message: string;
     }>;
     /**
      * 提交变更：从工作副本读文件，blob 存到仓库

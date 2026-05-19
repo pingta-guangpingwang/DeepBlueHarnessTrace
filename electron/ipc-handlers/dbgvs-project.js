@@ -40,6 +40,7 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs-extra"));
 const os = __importStar(require("os"));
 const child_process_1 = require("child_process");
+const dbvs_repository_1 = require("../dbvs-repository");
 const project_registry_1 = require("../project-registry");
 // ==================== 项目文档生成 ====================
 function generateDBHTGuide(projectName, projectPath, repoPath) {
@@ -529,6 +530,8 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
             if (!(await fs.pathExists(readmePath))) {
                 await fs.writeFile(readmePath, `# ${projectName}\n\n这是一个新的DBHT项目。\n`);
             }
+            // Auto-generate .dbvsignore template
+            await dbvsRepo.writeDbvsIgnore(workingCopyPath, dbvs_repository_1.DEFAULT_DBVSIGNORE_PATTERNS);
             await ensureProjectGuide(workingCopyPath, projectName.trim(), repoPath);
             await ensureProjectRequirements(workingCopyPath, projectName.trim());
             const registry = await (0, project_registry_1.readProjectRegistry)(rootPath);
@@ -604,7 +607,7 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
         }
     });
     // 注册已有目录为项目
-    ipcMain.handle('dbgvs:register-project', async (_, rootPath, projectPath, projectName, initWithCommit = false) => {
+    ipcMain.handle('dbgvs:register-project', async (_, rootPath, projectPath, projectName, initWithCommit = false, options) => {
         try {
             const name = projectName || path.basename(projectPath);
             const registry = await (0, project_registry_1.readProjectRegistry)(rootPath);
@@ -631,6 +634,11 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
                     return result;
             }
             await dbvsRepo.initWorkingCopy(repoPath, normalizedProjectPath);
+            // Write .dbvsignore if patterns provided
+            const ignorePatterns = options?.ignorePatterns;
+            if (ignorePatterns && ignorePatterns.length > 0) {
+                await dbvsRepo.writeDbvsIgnore(normalizedProjectPath, ignorePatterns);
+            }
             if (initWithCommit) {
                 const send = (msg) => mainWindow?.webContents.send('project:progress', msg);
                 send('正在扫描文件...');

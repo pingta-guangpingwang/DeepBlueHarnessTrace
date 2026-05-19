@@ -54,7 +54,9 @@ export interface ElectronAPI {
         }>;
         message?: string;
     }>;
-    registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean) => Promise<{
+    registerProject: (rootPath: string, projectPath: string, projectName?: string, initWithCommit?: boolean, options?: {
+        ignorePatterns?: string[];
+    }) => Promise<{
         success: boolean;
         message?: string;
     }>;
@@ -79,6 +81,14 @@ export interface ElectronAPI {
             path: string;
         }>;
         message?: string;
+    }>;
+    readDbvsIgnore: (workingCopyPath: string) => Promise<{
+        success: boolean;
+        content: string;
+    }>;
+    writeDbvsIgnore: (workingCopyPath: string, patterns: string[]) => Promise<{
+        success: boolean;
+        message: string;
     }>;
     commit: (repoPath: string, workingCopyPath: string, message: string, files: string[]) => Promise<{
         success: boolean;

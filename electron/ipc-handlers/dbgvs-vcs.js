@@ -295,4 +295,12 @@ function registerVcsHandlers(ipcMain, mainWindow, dbvsRepo) {
             return { success: false, message: String(error), summary: '', suggestedLabels: [], source: 'heuristic' };
         }
     });
+    // .dbvsignore 读写
+    ipcMain.handle('dbgvs:read-dbvsignore', async (_, workingCopyPath) => {
+        const content = await dbvsRepo.readDbvsIgnore(workingCopyPath);
+        return { success: true, content };
+    });
+    ipcMain.handle('dbgvs:write-dbvsignore', async (_, workingCopyPath, patterns) => {
+        return await dbvsRepo.writeDbvsIgnore(workingCopyPath, patterns);
+    });
 } // end registerVcsHandlers
