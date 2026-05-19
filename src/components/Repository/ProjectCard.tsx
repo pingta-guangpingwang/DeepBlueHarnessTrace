@@ -11,8 +11,7 @@ interface ProjectCardProps {
   total: number
   onEnter: () => void
   onCommit: () => void
-  onRemove: (projectPath: string) => void
-  onDeleteFiles: (projectPath: string) => void
+  onDeleteWithOptions: (options: { deleteFiles: boolean; deleteRepo: boolean }) => void
   onMoveUp: () => void
   onMoveDown: () => void
   onMoveTop: () => void
@@ -34,9 +33,10 @@ function getStarColor(rating: number): string {
   return '#dc2626'
 }
 
-export default function ProjectCard({ project, index, total, onEnter, onCommit, onRemove, onDeleteFiles, onMoveUp, onMoveDown, onMoveTop, onMoveBottom, onSetRating, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver }: ProjectCardProps) {
+export default function ProjectCard({ project, index, total, onEnter, onCommit, onDeleteWithOptions, onMoveUp, onMoveDown, onMoveTop, onMoveBottom, onSetRating, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver }: ProjectCardProps) {
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteFiles, setDeleteFiles] = useState(false)
+  const [deleteRepo, setDeleteRepo] = useState(false)
   const [showRatingPicker, setShowRatingPicker] = useState(false)
   const [, dispatch] = useAppState()
   const { t } = useI18n()
@@ -77,16 +77,18 @@ export default function ProjectCard({ project, index, total, onEnter, onCommit, 
     window.electronAPI.openFolder(project.path)
   }
 
-  const handleRemove = () => {
-    onRemove(hasWorkingCopy ? project.path : project.repoPath)
+  const openRemoveDialog = () => {
+    setDeleteFiles(false)
+    setDeleteRepo(false)
+    setShowRemoveDialog(true)
   }
 
-  const handleDeleteFiles = () => {
-    if (!hasWorkingCopy) return
-    onDeleteFiles(project.path)
+  const handleConfirmRemove = () => {
+    onDeleteWithOptions({ deleteFiles, deleteRepo })
+    setShowRemoveDialog(false)
   }
 
-  // Remove Dialog with two options
+  // Remove Dialog with checkbox options
   if (showRemoveDialog) {
     return (
       <div className="project-card" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px' }}>
@@ -98,68 +100,91 @@ export default function ProjectCard({ project, index, total, onEnter, onCommit, 
             </span>
           </div>
           <button
-            onClick={() => { setShowRemoveDialog(false); setShowDeleteConfirm(false) }}
+            onClick={() => setShowRemoveDialog(false)}
             style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '16px', color: '#9ca3af' }}
           >✕</button>
         </div>
 
-        {!showDeleteConfirm ? (
-          <>
-            <div style={{ fontSize: '13px', color: '#374151', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
-              {t.projectCard.removeTitle}
-            </div>
+        <div style={{ fontSize: '13px', color: '#374151', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
+          {t.projectCard.removeTitle}
+        </div>
 
-            {/* Option 1: Unlink only */}
-            <button
-              onClick={() => { handleRemove(); setShowRemoveDialog(false) }}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px',
-                width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db',
-                background: '#f9fafb', cursor: 'pointer', textAlign: 'left',
-              }}
-            >
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#1f2937' }}>{t.projectCard.unlinkOnly}</span>
-              <span style={{ fontSize: '11px', color: '#6b7280' }}>{t.projectCard.unlinkDesc}</span>
-            </button>
+        {/* Checkbox 1: Remove from list (mandatory) */}
+        <label style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '8px 12px', borderRadius: '6px',
+          background: '#f0fdf4', border: '1px solid #bbf7d0',
+          cursor: 'default', fontSize: '13px', color: '#374151',
+        }}>
+          <input type="checkbox" checked readOnly style={{ accentColor: '#16a34a', width: '16px', height: '16px' }} />
+          <span>{t.projectCard.removeCheckboxList}</span>
+        </label>
 
-            {/* Option 2: Delete files */}
-            {hasWorkingCopy && (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px',
-                  width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fca5a5',
-                  background: '#fef2f2', cursor: 'pointer', textAlign: 'left',
-                }}
-              >
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#dc2626' }}>{t.projectCard.deleteFiles}</span>
-                <span style={{ fontSize: '11px', color: '#991b1b' }}>{t.projectCard.deleteFilesDesc}</span>
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: '13px', color: '#dc2626', fontWeight: 600 }}>
-              ⚠ {t.projectCard.deleteFilesConfirm}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button
-                className="secondary-button"
-                style={{ fontSize: '12px', padding: '4px 12px' }}
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                className="warning-button"
-                style={{ fontSize: '12px', padding: '4px 12px', background: '#dc2626' }}
-                onClick={() => { handleDeleteFiles(); setShowRemoveDialog(false); setShowDeleteConfirm(false) }}
-              >
-                {t.projectCard.deleteFilesFinal}
-              </button>
-            </div>
-          </>
+        {/* Checkbox 2: Delete working copy files */}
+        {hasWorkingCopy && (
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '8px 12px', borderRadius: '6px',
+            background: deleteFiles ? '#fef2f2' : '#fff',
+            border: deleteFiles ? '1px solid #fca5a5' : '1px solid #e5e7eb',
+            cursor: 'pointer', fontSize: '13px',
+            color: deleteFiles ? '#dc2626' : '#6b7280',
+          }}>
+            <input
+              type="checkbox"
+              checked={deleteFiles}
+              onChange={e => setDeleteFiles(e.target.checked)}
+              style={{ accentColor: '#dc2626', width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <span style={{ color: '#dc2626' }}>{t.projectCard.removeCheckboxFiles}</span>
+          </label>
         )}
+
+        {/* Checkbox 3: Delete repository */}
+        <label style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '8px 12px', borderRadius: '6px',
+          background: deleteRepo ? '#fef2f2' : '#fff',
+          border: deleteRepo ? '1px solid #fca5a5' : '1px solid #e5e7eb',
+          cursor: 'pointer', fontSize: '13px',
+          color: deleteRepo ? '#dc2626' : '#6b7280',
+        }}>
+          <input
+            type="checkbox"
+            checked={deleteRepo}
+            onChange={e => setDeleteRepo(e.target.checked)}
+            style={{ accentColor: '#dc2626', width: '16px', height: '16px', cursor: 'pointer' }}
+          />
+          <span style={{ color: '#dc2626' }}>{t.projectCard.removeCheckboxRepo}</span>
+        </label>
+
+        {/* Warning when repo delete is checked */}
+        {deleteRepo && (
+          <div style={{
+            padding: '8px 12px', background: '#fef2f2', borderRadius: '6px',
+            border: '1px solid #fca5a5', fontSize: '12px', color: '#dc2626',
+            lineHeight: '1.5',
+          }}>
+            ⚠ {t.projectCard.removeCheckboxRepoWarn}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            className="secondary-button"
+            style={{ fontSize: '12px', padding: '4px 12px' }}
+            onClick={() => setShowRemoveDialog(false)}
+          >
+            {t.common.cancel}
+          </button>
+          <button
+            className="warning-button"
+            style={{ fontSize: '12px', padding: '4px 12px', background: '#dc2626' }}
+            onClick={handleConfirmRemove}
+          >
+            {t.projectCard.removeConfirm}
+          </button>
+        </div>
       </div>
     )
   }
@@ -286,7 +311,7 @@ export default function ProjectCard({ project, index, total, onEnter, onCommit, 
         <button
           className="secondary-button"
           style={{ fontSize: '12px', padding: '4px 12px', color: '#9ca3af' }}
-          onClick={() => setShowRemoveDialog(true)}
+          onClick={openRemoveDialog}
         >
           {t.projectCard.remove}
         </button>

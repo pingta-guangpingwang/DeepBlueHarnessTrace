@@ -546,7 +546,7 @@ function RepoManager({ rootPath }: { rootPath: string }) {
 export default function RepoList() {
   const [state, dispatch] = useAppState()
   const { t, locale, setLocale } = useI18n()
-  const { loadProjects, importProject, confirmImport, checkoutToProject, openProject, removeProject, deleteProject, importProgress, setImportProgress } = useProjects()
+  const { loadProjects, importProject, confirmImport, checkoutToProject, openProject, removeProject, deleteProject, deleteRepository, importProgress, setImportProgress } = useProjects()
   const { openCommitPanel } = useRepository()
   const [settingsTab, setSettingsTab] = useState<'general' | 'repository' | 'context-menu'>('general')
   const [importFolderPath, setImportFolderPath] = useState<string | null>(null)
@@ -610,6 +610,16 @@ export default function RepoList() {
   const handleSetRating = async (repoPath: string, rating: number) => {
     await window.electronAPI.setProjectRating(state.rootRepositoryPath, repoPath, rating)
     await loadProjects()
+  }
+
+  const handleDeleteWithOptions = (project: Project) => async (options: { deleteFiles: boolean; deleteRepo: boolean }) => {
+    if (options.deleteRepo) {
+      await deleteRepository(project.repoPath, options.deleteFiles)
+    } else if (options.deleteFiles && project.path) {
+      await deleteProject(project.path)
+    } else {
+      await removeProject(project.path || project.repoPath)
+    }
   }
 
   const stopAutoScroll = () => {
@@ -817,8 +827,7 @@ export default function RepoList() {
                 total={sortedProjects.length}
                 onEnter={() => openProject(project.path)}
                 onCommit={() => openCommitPanel(project.path)}
-                onRemove={removeProject}
-                onDeleteFiles={deleteProject}
+                onDeleteWithOptions={handleDeleteWithOptions(project)}
                 onMoveUp={() => handleMoveUp(index)}
                 onMoveDown={() => handleMoveDown(index)}
                 onMoveTop={() => handleMoveTop(index)}
