@@ -5,6 +5,11 @@ interface FileTreeSelectorProps {
   files: FileEntry[]
   maxHeight?: string
   onChange?: (uncheckedPaths: string[]) => void
+  /** External control: provide unchecked paths to override internal state */
+  uncheckedPaths?: string[]
+  /** External control: provide expanded dirs to override internal state */
+  expandedDirs?: string[]
+  onExpandChange?: (expandedDirs: string[]) => void
 }
 
 function collectDescendants(node: TreeNode): string[] {
@@ -35,10 +40,9 @@ function FileTreeRow({
   const isUnchecked = uncheckedPaths.has(node.path)
   const allChecked = !isUnchecked
 
-  // Determine if this directory has mixed children
   let isIndeterminate = false
   if (isDir && node.children.length > 0) {
-    const childPaths = collectDescendants(node).slice(1) // exclude self
+    const childPaths = collectDescendants(node).slice(1)
     const uncheckedCount = childPaths.filter(p => uncheckedPaths.has(p)).length
     isIndeterminate = uncheckedCount > 0 && uncheckedCount < childPaths.length
   }
@@ -70,7 +74,6 @@ function FileTreeRow({
           fontFamily: 'system-ui, sans-serif',
         }}
       >
-        {/* Checkbox */}
         <input
           type="checkbox"
           checked={allChecked}
@@ -81,7 +84,6 @@ function FileTreeRow({
           style={{ marginRight: 6, flexShrink: 0, cursor: 'pointer' }}
         />
 
-        {/* Expand arrow (directories only) */}
         <span
           onClick={handleDirClick}
           style={{
@@ -99,7 +101,6 @@ function FileTreeRow({
           &#9654;
         </span>
 
-        {/* Icon */}
         <span style={{
           width: 22,
           textAlign: 'center',
@@ -111,7 +112,6 @@ function FileTreeRow({
           {isDir ? '📁' : '📄'}
         </span>
 
-        {/* Name */}
         <span style={{
           marginLeft: 4,
           overflow: 'hidden',
@@ -123,7 +123,6 @@ function FileTreeRow({
         </span>
       </div>
 
-      {/* Render expanded children */}
       {isDir && isExpanded && node.children.map(child => (
         <FileTreeRow
           key={child.path}
@@ -143,48 +142,75 @@ export default function FileTreeSelector({
   files,
   maxHeight = '300px',
   onChange,
+  uncheckedPaths: externalUnchecked,
+  expandedDirs: externalExpanded,
+  onExpandChange,
 }: FileTreeSelectorProps) {
-  const [uncheckedPaths, setUncheckedPaths] = useState<Set<string>>(new Set())
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set())
+  const [internalUnchecked, setInternalUnchecked] = useState<Set<string>>(new Set())
+  const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
+
+  const isControlled = externalUnchecked !== undefined
+  const uncheckedSet = useMemo(
+    () => isControlled ? new Set(externalUnchecked) : internalUnchecked,
+    [isControlled, externalUnchecked, internalUnchecked]
+  )
+  const expandedSet = useMemo(
+    () => externalExpanded !== undefined ? new Set(externalExpanded) : internalExpanded,
+    [externalExpanded, internalExpanded]
+  )
 
   const tree = useMemo(() => buildTree(files), [files])
 
   const toggleCheck = useCallback((path: string, isDirectory: boolean, children: TreeNode[]) => {
-    setUncheckedPaths(prev => {
-      const next = new Set(prev)
+    if (isControlled) {
+      const next = new Set(uncheckedSet)
       if (isDirectory) {
         const descendants = collectDescendants({ path, isDirectory: true, name: '', children })
         if (next.has(path)) {
-          // Re-check: remove self and all descendants
           for (const d of descendants) next.delete(d)
         } else {
-          // Uncheck: add self and all descendants
           for (const d of descendants) next.add(d)
         }
       } else {
-        if (next.has(path)) {
-          next.delete(path)
-        } else {
-          next.add(path)
-        }
+        if (next.has(path)) next.delete(path)
+        else next.add(path)
       }
-      // Notify parent
       onChange?.(Array.from(next))
-      return next
-    })
-  }, [onChange])
+    } else {
+      setInternalUnchecked(prev => {
+        const next = new Set(prev)
+        if (isDirectory) {
+          const descendants = collectDescendants({ path, isDirectory: true, name: '', children })
+          if (next.has(path)) {
+            for (const d of descendants) next.delete(d)
+          } else {
+            for (const d of descendants) next.add(d)
+          }
+        } else {
+          if (next.has(path)) next.delete(path)
+          else next.add(path)
+        }
+        onChange?.(Array.from(next))
+        return next
+      })
+    }
+  }, [isControlled, uncheckedSet, onChange])
 
   const toggleDir = useCallback((path: string) => {
-    setExpandedDirs(prev => {
-      const next = new Set(prev)
-      if (next.has(path)) {
-        next.delete(path)
-      } else {
-        next.add(path)
-      }
-      return next
-    })
-  }, [])
+    if (externalExpanded !== undefined && onExpandChange) {
+      const next = new Set(expandedSet)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      onExpandChange(Array.from(next))
+    } else {
+      setInternalExpanded(prev => {
+        const next = new Set(prev)
+        if (next.has(path)) next.delete(path)
+        else next.add(path)
+        return next
+      })
+    }
+  }, [externalExpanded, expandedSet, onExpandChange])
 
   if (files.length === 0) {
     return (
@@ -194,15 +220,17 @@ export default function FileTreeSelector({
     )
   }
 
+  const isFullHeight = maxHeight.endsWith('%') || maxHeight.endsWith('vh')
+
   return (
     <div style={{
       maxHeight,
+      ...(isFullHeight ? { height: '100%' } : {}),
       overflowY: 'auto',
       border: '1px solid #e5e7eb',
       borderRadius: 6,
       backgroundColor: '#fafbfc',
     }}>
-      {/* Header hint */}
       <div style={{
         padding: '6px 12px',
         fontSize: 11,
@@ -210,8 +238,8 @@ export default function FileTreeSelector({
         borderBottom: '1px solid #e5e7eb',
         backgroundColor: '#f3f4f6',
       }}>
-        {uncheckedPaths.size > 0
-          ? `${uncheckedPaths.size} item(s) selected to ignore`
+        {uncheckedSet.size > 0
+          ? `${uncheckedSet.size} item(s) selected to ignore`
           : 'All files included — uncheck items to ignore'}
       </div>
       {tree.map(node => (
@@ -219,9 +247,9 @@ export default function FileTreeSelector({
           key={node.path}
           node={node}
           depth={0}
-          uncheckedPaths={uncheckedPaths}
+          uncheckedPaths={uncheckedSet}
           onToggle={toggleCheck}
-          expandedDirs={expandedDirs}
+          expandedDirs={expandedSet}
           onToggleDir={toggleDir}
         />
       ))}

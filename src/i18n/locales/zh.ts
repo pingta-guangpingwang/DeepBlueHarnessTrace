@@ -752,6 +752,16 @@ const zh: Translations = {
     importing: '导入中...',
     confirmImport: '确认导入',
     toggleFileTree: '展开文件列表，选择要忽略的文件...',
+    fileTree: '项目文件结构',
+    fileTreeHint: '勾选 = 同步到仓库，取消勾选 = 忽略该文件/文件夹',
+    defaultIgnores: '默认忽略规则',
+    defaultIgnoresHint: '以下类型的文件默认不会被同步，取消勾选即可恢复同步',
+    fileTypes: '文件类型过滤',
+    fileTypesHint: '按文件扩展名批量勾选/取消，方便快速选择',
+    filesCount: '{count} 个文件',
+    ignoreCount: '{count} 项被忽略',
+    allIncluded: '全部同步',
+    rulesCount: '{count} 条规则',
   },
 
   // Conflict Modal

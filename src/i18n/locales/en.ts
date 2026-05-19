@@ -758,6 +758,16 @@ const en = {
     importing: 'Importing...',
     confirmImport: 'Confirm Import',
     toggleFileTree: 'Show file list, select files to ignore...',
+    fileTree: 'Project File Tree',
+    fileTreeHint: 'Checked = synced to repo, unchecked = ignored',
+    defaultIgnores: 'Default Ignore Rules',
+    defaultIgnoresHint: 'These file types are ignored by default. Uncheck to sync them.',
+    fileTypes: 'File Type Filter',
+    fileTypesHint: 'Bulk toggle by file extension for quick selection',
+    filesCount: '{count} files',
+    ignoreCount: '{count} ignored',
+    allIncluded: 'All synced',
+    rulesCount: '{count} rules',
   },
 
   // Conflict Modal

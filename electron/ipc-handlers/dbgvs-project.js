@@ -509,9 +509,6 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
             if (!projectName?.trim()) {
                 return { success: false, message: '请输入项目名称' };
             }
-            if (!customPath?.trim()) {
-                return { success: false, message: '请选择客户端路径' };
-            }
             const repoPath = path.resolve(path.join(rootPath, 'repositories', projectName.trim()));
             await fs.ensureDir(path.join(rootPath, 'repositories'));
             if (await fs.pathExists(path.join(repoPath, 'config.json'))) {
@@ -520,10 +517,11 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
             const result = await dbvsRepo.createRepository(repoPath, projectName.trim());
             if (!result.success)
                 return result;
-            const resolvedCustom = path.resolve(customPath.trim());
-            const workingCopyPath = path.basename(resolvedCustom) === projectName.trim()
-                ? resolvedCustom
-                : path.join(resolvedCustom, projectName.trim());
+            const workingCopyPath = customPath?.trim()
+                ? (path.basename(path.resolve(customPath.trim())) === projectName.trim()
+                    ? path.resolve(customPath.trim())
+                    : path.join(path.resolve(customPath.trim()), projectName.trim()))
+                : path.join(rootPath, 'working-copies', projectName.trim());
             await fs.ensureDir(workingCopyPath);
             await dbvsRepo.initWorkingCopy(repoPath, workingCopyPath);
             const readmePath = path.join(workingCopyPath, 'README.md');
@@ -571,6 +569,7 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
                 }
                 catch { /* ignore */ }
                 if (entry.workingCopies.length > 0) {
+                    let hasValidCopy = false;
                     for (const wc of entry.workingCopies) {
                         const wcExists = await fs.pathExists(wc.path);
                         if (wcExists) {
@@ -584,7 +583,20 @@ function registerProjectHandlers(ipcMain, mainWindow, dbvsRepo) {
                                 order: entry.order ?? 0,
                                 rating: entry.rating ?? 2,
                             });
+                            hasValidCopy = true;
                         }
+                    }
+                    if (!hasValidCopy) {
+                        projectList.push({
+                            name: entry.name,
+                            path: entry.workingCopies[0].path,
+                            repoPath: entry.repoPath,
+                            status: '工作副本缺失',
+                            lastUpdate,
+                            hasChanges: false,
+                            order: entry.order ?? 0,
+                            rating: entry.rating ?? 2,
+                        });
                     }
                 }
                 else {
