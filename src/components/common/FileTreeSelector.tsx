@@ -56,7 +56,6 @@ function FileTreeRow({
     if (isDir) onToggleDir(node.path)
   }
 
-  const rowHeight = 28
   const indent = 12 + depth * 18
 
   return (
@@ -65,15 +64,36 @@ function FileTreeRow({
         style={{
           display: 'flex',
           alignItems: 'center',
-          height: rowHeight,
+          height: 28,
           paddingLeft: indent,
           paddingRight: 8,
           cursor: 'default',
           opacity: isUnchecked && !isDir ? 0.4 : 1,
           fontSize: 13,
           fontFamily: 'system-ui, sans-serif',
+          gap: 0,
         }}
       >
+        {/* Expand arrow (directories only) */}
+        <span
+          onClick={handleDirClick}
+          style={{
+            width: 14,
+            textAlign: 'center',
+            flexShrink: 0,
+            cursor: isDir ? 'pointer' : 'default',
+            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s',
+            fontSize: 10,
+            color: isDir ? '#6b7280' : 'transparent',
+            userSelect: 'none',
+            lineHeight: '28px',
+          }}
+        >
+          &#9654;
+        </span>
+
+        {/* Checkbox — tight against the icon */}
         <input
           type="checkbox"
           checked={allChecked}
@@ -81,43 +101,32 @@ function FileTreeRow({
             if (el) el.indeterminate = isIndeterminate
           }}
           onChange={handleCheckChange}
-          style={{ marginRight: 6, flexShrink: 0, cursor: 'pointer' }}
+          style={{
+            width: 14, height: 14,
+            margin: 0,
+            marginRight: isDir ? 3 : 0,
+            flexShrink: 0,
+            cursor: 'pointer',
+            accentColor: '#4f46e5',
+          }}
         />
 
-        <span
-          onClick={handleDirClick}
-          style={{
-            width: 16,
-            textAlign: 'center',
-            flexShrink: 0,
-            cursor: isDir ? 'pointer' : 'default',
-            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.15s',
-            fontSize: 11,
-            color: isDir ? '#9ca3af' : 'transparent',
-            userSelect: 'none',
-          }}
-        >
-          &#9654;
-        </span>
-
+        {/* Icon + name */}
         <span style={{
-          width: 22,
-          textAlign: 'center',
           flexShrink: 0,
-          fontSize: 12,
-          color: isDir ? '#f59e0b' : '#6b7280',
-          userSelect: 'none',
+          fontSize: 14,
+          marginLeft: 2,
+          marginRight: 3,
+          lineHeight: '28px',
         }}>
-          {isDir ? '📁' : '📄'}
+          {isDir ? (isExpanded ? '📂' : '📁') : '📄'}
         </span>
-
         <span style={{
-          marginLeft: 4,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           color: isUnchecked && isDir ? '#9ca3af' : '#374151',
+          lineHeight: '28px',
         }}>
           {node.name}
         </span>
