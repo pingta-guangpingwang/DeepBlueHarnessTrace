@@ -174,17 +174,17 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
       </div>
 
       {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', padding: '12px', gap: '12px' }}>
         {/* Left: File Tree */}
         <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          background: '#fff', margin: '12px', borderRadius: '8px',
+          flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+          background: '#fff', borderRadius: '8px',
           border: '1px solid #e5e7eb', overflow: 'hidden',
         }}>
           <div style={{
             padding: '10px 16px', borderBottom: '1px solid #e5e7eb',
             background: '#fafbfc', display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'space-between', flexShrink: 0,
           }}>
             <div>
               <span style={{ fontWeight: 600, fontSize: '13px', color: '#374151' }}>
@@ -202,7 +202,7 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
                 : t.importProject.allIncluded || 'All synced'}
             </span>
           </div>
-          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ flex: 1, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
             {fileEntries.length > 0 ? (
               <div style={{ position: 'absolute', inset: 0 }}>
                 <FileTreeSelector
@@ -224,9 +224,9 @@ export default function ImportProjectModal({ folderPath, warning, progressLog, o
 
         {/* Right: Settings Panel */}
         <div style={{
-          width: '340px', flexShrink: 0,
+          width: '360px', flexShrink: 0,
           display: 'flex', flexDirection: 'column', gap: '12px',
-          padding: '12px 12px 12px 0', overflowY: 'auto',
+          overflowY: 'auto',
         }}>
           {/* Warning */}
           {warning && (
